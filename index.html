@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <title>UK geocoding with Javascript</title>
+
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        
+        <style>
+            body { padding: 5%; }
+            #postcode { margin-bottom: 20px; }
+        </style>
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <h1>UK geocoding with Javascript</h1>
+                
+                <p>Simple demo which passes postcode to the API on form submit and returns latitude and longitude.</p>
+                
+                <p><a href="https://developers.alliescomputing.com/postcoder-web-api/geocoding/position">Full geocoding API documentation</a></p>
+                
+                <br><hr><br>
+                
+                <form id="example_form">
+                    <div class="form-group">
+                        <label for="postcode">Postcode number</label>
+                        <input type="postcode" class="form-control" id="postcode" placeholder="Postcode">
+                    </div>
+                    <button type="submit" class="btn btn-default" id="geocode">Geocode</button>
+                </form>
+            </div>
+        
+        <script>
+            
+            // Replace with your API key, test key will always return latitude and longitude for "NR14 7PZ"
+            var api_key = "PCW45-12345-12345-1234X";
+            
+            var example_form = document.getElementById("example_form");
+            
+            example_form.addEventListener("submit", function(e) {
+                e.preventDefault();
+                var postcode_field = document.getElementById("postcode");
+                geocode_postcode(postcode_field);
+            });
+            
+            function geocode_postcode(element) {
+                
+                // Grab the input text and trim any whitespace
+                var postcode = element.value.trim();
+                
+                if (postcode != "") {
+                
+                    // Remove any previous geocoding results
+                    var geocode_result = document.getElementById("geocode_result");
+                    if(geocode_result) { geocode_result.remove(); }
+                    
+                    // Create a template bootstrap alert div
+                    var response_html = document.createElement("div");
+                    response_html.setAttribute("class", "well");
+                    response_html.setAttribute("id", "geocode_result");
+                
+                    // Create the URL to API including API key and encoded postcode
+                    var geocode_url = "https://ws.postcoder.com/pcw/" + api_key + "/position/UK/" + encodeURIComponent(postcode);
+                    
+                    // Create a loading message
+                    var loading_html = document.createElement("div");
+                    loading_html.setAttribute("id","geocode_loading");
+                    loading_html.textContent = "Geocoding postcode...";
+                    
+                    element.insertAdjacentElement("afterend", loading_html);
+
+                    // Call the API
+                    var geocode_request = new XMLHttpRequest();
+                    geocode_request.open("GET", geocode_url, true);
+                    
+                    geocode_request.onload = function () {
+                        if (geocode_request.status >= 200 && geocode_request.status < 400) {
+                            
+                            loading_html.remove();
+
+                            var data = JSON.parse(geocode_request.responseText);
+                            
+                            if(data.length > 0) {
+                            
+                                response_html.innerHTML = "Latitude: " + data[0].latitude + "<br>Longitude: " + data[0].longitude;
+                                element.insertAdjacentElement("afterend", response_html);
+                                
+                            } else {
+                                
+                                response_html.textContent = "Postcode: \"" + postcode + "\" Not found.";
+                                elementinsertAdjacentElement("afterend", response_html);
+                                
+                            }
+                            
+                        } else {
+                            
+                            loading_html.remove();
+                            
+                            // Triggered if API does not return HTTP code between 200 and 399
+                            // More info - https://developers.alliescomputing.com/postcoder-web-api/error-handling
+                            
+                        }
+                        
+                    };
+                    
+                    geocode_request.onerror = function() {
+                        
+                        loading_html.remove();
+
+                        // Triggered if API cannot be reached
+                        // More info - https://developers.alliescomputing.com/postcoder-web-api/error-handling
+
+                    };
+
+                    geocode_request.send();
+                
+                } else {
+                    
+                    // Could show an "postcode is required" message here
+                    
+                }
+                
+            }
+
+        </script>
+    </body>
+</html>
